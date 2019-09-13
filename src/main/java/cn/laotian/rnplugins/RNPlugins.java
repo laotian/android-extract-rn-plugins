@@ -31,8 +31,8 @@ public class RNPlugins {
         typeMap.put("com.facebook.react.bridge.ReadableMap","object");
         typeMap.put("com.facebook.react.bridge.ReadableArray","Array<any>");
         typeMap.put("java.lang.String","string");
-        typeMap.put("boolean","bool");
-        typeMap.put("java.lang.Boolean","bool");
+        typeMap.put("boolean","boolean");
+        typeMap.put("java.lang.Boolean","boolean");
         typeMap.put("java.lang.Integer","number");
         typeMap.put("java.lang.Float","number");
         typeMap.put("java.lang.Double","number");
