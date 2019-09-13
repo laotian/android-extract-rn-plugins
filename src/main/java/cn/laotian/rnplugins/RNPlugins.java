@@ -25,6 +25,65 @@ public class RNPlugins {
         boolean hasConstants =  false;
     }
 
+    private static Map<String,String> typeMap = new HashMap<>();
+    private static final String PROMISE = "<promise>";
+    static {
+        typeMap.put("com.facebook.react.bridge.ReadableMap","[key:string]:any");
+        typeMap.put("com.facebook.react.bridge.ReadableArray","Array<any>");
+        typeMap.put("java.lang.String","string");
+        typeMap.put("boolean","bool");
+        typeMap.put("java.lang.Boolean","bool");
+        typeMap.put("java.lang.Integer","number");
+        typeMap.put("java.lang.Float","number");
+        typeMap.put("java.lang.Double","number");
+        typeMap.put("int","number");
+        typeMap.put("float","number");
+        typeMap.put("double","number");
+        typeMap.put("com.facebook.react.bridge.Promise",PROMISE);
+        typeMap.put("com.facebook.react.bridge.Callback","(data:any)=>void");
+    }
+
+    private static String formatType(String paramType){
+        if(typeMap.containsKey(paramType)){
+            return typeMap.get(paramType);
+        }
+        return paramType;
+    }
+
+    private static String getProxyName(String pluginName){
+        return pluginName+"Proxy";
+    }
+
+    private static boolean isPromiseMethod(Plugin.Method method){
+        boolean  isPromise = false;
+        if(method.paramsTypes.size()==0){
+            return false;
+        }
+        int lastIndex = method.paramsTypes.size()-1;
+        if(method.paramsTypes.size()>0 && formatType(method.paramsTypes.get(lastIndex)).equals(PROMISE)) {
+            isPromise = true;
+        }
+        return isPromise;
+    }
+
+    private static String formatMethod(Plugin.Method method){
+        boolean  isPromise = isPromiseMethod(method);
+        List<String> paramsNames = method.paramNames;
+        if(isPromise){
+            int lastIndex = method.paramsTypes.size()-1;
+            if(method.paramsTypes.size()==1){
+                paramsNames = new ArrayList<>();
+            }else {
+                paramsNames = paramsNames.subList(0, lastIndex);
+            }
+        }
+        String params = "";
+        if(paramsNames.size()>0){
+            params = String.join(",",paramsNames);
+        }
+        return String.format("%s(%s)",method.name,params);
+    }
+
 
     public static void extract1(String sourceDir, String sourceFileDescRegularExpress, String classDir, List<String> parentClassNames, String manifestSaveTo, String pluginFileSaveTo) throws IOException {
         if(parentClassNames==null || parentClassNames.size()==0){
@@ -40,11 +99,6 @@ public class RNPlugins {
             sourceFileDescRegularExpress = "@desc\\b+(.*)";
         }
         List<String> classFileList = traverseFile(new File(classDir),new File(classDir));
-//        List<String> sourceFileList = traverseFile(new File(sourceDir),new File(sourceDir));
-//        List<File> sourceFileList = new ArrayList<>();
-//        for(String sourceDir : sourceDirList){
-//
-//        }
         List<Plugin> plugins = new ArrayList<>();
         for(String classFileRelativePath :classFileList){
             String classFile = new File(classDir,classFileRelativePath).getAbsolutePath();
@@ -70,7 +124,7 @@ public class RNPlugins {
         pluginContents.add("} from 'NativeModules'");
         pluginContents.add("");
         for(Plugin plugin:plugins){
-            pluginContents.add("///////////////////////////////////////////");
+            pluginContents.add("///////////////////////////////////////////////////");
             if(!isEmpty(plugin.description)){
                 pluginContents.add("/**");
                 pluginContents.add(" * @desc " + plugin.description);
@@ -81,18 +135,24 @@ public class RNPlugins {
 
             for(Plugin.Method method:plugin.methods){
                 if(method.paramNames.size()>0) {
-                    pluginContents.add("  /**");
-                    for (int i = 0; i < method.paramNames.size(); i++) {
-                        String paramName = method.paramNames.get(i);
-                        String paramType = method.paramsTypes.get(i);
-                        pluginContents.add("   * @param " + paramName + "{" + paramType + "}");
-                    }
-                    pluginContents.add("   */");
+                        pluginContents.add("");
+                        pluginContents.add("  /**");
+                        for (int i = 0; i < method.paramNames.size(); i++) {
+                            String paramName = method.paramNames.get(i);
+                            String paramType = method.paramsTypes.get(i);
+                            String formatParam = formatType(paramType);
+                            if(formatParam.equals(PROMISE)) {
+                                pluginContents.add(String.format("   * @return  {%s}",  "Promise<any>"));
+                            }else{
+                                pluginContents.add(String.format("   * @param %s {%s}",paramName, formatParam ));
+                            }
+                        }
+                        pluginContents.add("   */");
                 }
-                pluginContents.add("  "+method.name+"() {");
-                pluginContents.add("    "+plugin.name+"."+method.name+"();");
-                pluginContents.add("  }");
-                pluginContents.add("");
+                String methodDef = formatMethod(method);
+                pluginContents.add(String.format("  %s {", methodDef));
+                pluginContents.add(String.format("    %s%s.%s;", (isPromiseMethod(method) ? "return ": ""),plugin.name, methodDef));
+                pluginContents.add("  },");
             }
 
             if(plugin.hasConstants){
