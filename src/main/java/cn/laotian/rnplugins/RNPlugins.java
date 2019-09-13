@@ -80,16 +80,18 @@ public class RNPlugins {
             pluginContents.add("const " + proxyName + " = {");
 
             for(Plugin.Method method:plugin.methods){
-                pluginContents.add("/**");
-                for(int i=0;i<method.paramNames.size();i++){
-                    String paramName = method.paramNames.get(i);
-                    String paramType = method.paramsTypes.get(i);
-                    pluginContents.add(" * @param " + paramName +"{" + paramType+ "}" );
+                if(method.paramNames.size()>0) {
+                    pluginContents.add("  /**");
+                    for (int i = 0; i < method.paramNames.size(); i++) {
+                        String paramName = method.paramNames.get(i);
+                        String paramType = method.paramsTypes.get(i);
+                        pluginContents.add("   * @param " + paramName + "{" + paramType + "}");
+                    }
+                    pluginContents.add("   */");
                 }
-                pluginContents.add(" */");
-                pluginContents.add(method.name+"() {");
-                pluginContents.add(plugin.name+"."+method.name+"();");
-                pluginContents.add("}");
+                pluginContents.add("  "+method.name+"() {");
+                pluginContents.add("    "+plugin.name+"."+method.name+"();");
+                pluginContents.add("  }");
                 pluginContents.add("");
             }
 
