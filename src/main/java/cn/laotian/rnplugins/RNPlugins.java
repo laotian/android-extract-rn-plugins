@@ -96,7 +96,7 @@ public class RNPlugins {
             }
 
             if(plugin.hasConstants){
-                pluginContents.add("// -- 此插件定义了常量，请在此处添加");
+                pluginContents.add("  // -- 此插件定义了常量，请在此处添加");
             }
             pluginContents.add("}");
             pluginContents.add(String.format("Object.assign(%s,%s);",proxyName,plugin.name));
