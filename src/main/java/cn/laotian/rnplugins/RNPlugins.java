@@ -26,9 +26,9 @@ public class RNPlugins {
     }
 
     private static Map<String,String> typeMap = new HashMap<>();
-    private static final String PROMISE = "<promise>";
+    private static final String PROMISE = "Promise";
     static {
-        typeMap.put("com.facebook.react.bridge.ReadableMap","[key:string]:any");
+        typeMap.put("com.facebook.react.bridge.ReadableMap","object");
         typeMap.put("com.facebook.react.bridge.ReadableArray","Array<any>");
         typeMap.put("java.lang.String","string");
         typeMap.put("boolean","bool");
@@ -40,7 +40,7 @@ public class RNPlugins {
         typeMap.put("float","number");
         typeMap.put("double","number");
         typeMap.put("com.facebook.react.bridge.Promise",PROMISE);
-        typeMap.put("com.facebook.react.bridge.Callback","(data:any)=>void");
+        typeMap.put("com.facebook.react.bridge.Callback","function");
     }
 
     private static String formatType(String paramType){
